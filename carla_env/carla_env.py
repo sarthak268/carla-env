@@ -123,10 +123,12 @@ class CarlaEnv(gym.Env):
             dtype=np.float32
         )
 
+        self.height = 512
+        self.width = 512
 
         obs_size = len(self.reset())
-        self.observation_space = gym.spaces.Box(-float("inf"), float("inf"), (obs_size,),  dtype=np.float32)
-
+        #self.observation_space = gym.spaces.Box(-float("inf"), float("inf"), (obs_size,),  dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
 
     def dist_from_goal(self, measurements):
         x = array_from_loc(measurements.player_measurements.transform.location)
@@ -193,11 +195,11 @@ class CarlaEnv(gym.Env):
         )
         #settings.randomize_seeds()
 
-
     def _add_sensors(self):
         camera0 = Camera('RenderCamera0')
         # Set image resolution in pixels.
-        camera0.set_image_size(800, 600)
+        # camera0.set_image_size(800, 600)
+        camera0.set_image_size(self.height, self.width)
         # Set its position relative to the car in meters.
         camera0.set_position(-4.30, 0, 2.60)
         camera0.set_rotation(pitch=-25, yaw=0, roll=0)
@@ -273,10 +275,10 @@ class CarlaEnv(gym.Env):
                     print(f"There was a TCP Error (Attempt {i}). Retrying. ")
                 time.sleep(3)
 
-
-        
         measurements, sensor_data = self.current_state
-        return self._process_observation(measurements, sensor_data)
+        #return self._process_observation(measurements, sensor_data)
+
+        return self.render(mode='rgb_array')
 
     def step(self, a):
         control = self._map_controls(a)
@@ -291,7 +293,8 @@ class CarlaEnv(gym.Env):
         measurements, sensor_data = self.current_state
         
         reward, is_done = self._get_reward_and_termination()
-        obs = self._process_observation(measurements, sensor_data)
+        #obs = self._process_observation(measurements, sensor_data)
+        obs = self.render(mode='rgb_array')
 
         return obs, reward, is_done, {}
 
