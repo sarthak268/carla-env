@@ -96,7 +96,8 @@ class CarlaEnv(gym.Env):
             num_vehicles=1,
             vehicles_seed=lambda: 200,
             player_starts=2,
-            goals=0
+            goals=0,
+            image_obs = False
         ):
         self.num_vehicles = num_vehicles
         self.vehicles_seed = vehicles_seed
@@ -125,10 +126,13 @@ class CarlaEnv(gym.Env):
 
         self.height = 512
         self.width = 512
+        self.image_obs = image_obs
 
-        obs_size = len(self.reset())
-        #self.observation_space = gym.spaces.Box(-float("inf"), float("inf"), (obs_size,),  dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
+        if self.image_obs:
+            self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
+        else:
+            obs_size = len(self.reset())
+            self.observation_space = gym.spaces.Box(-float("inf"), float("inf"), (obs_size,),  dtype=np.float32)
 
     def dist_from_goal(self, measurements):
         x = array_from_loc(measurements.player_measurements.transform.location)
@@ -241,7 +245,6 @@ class CarlaEnv(gym.Env):
 
         return reward, is_done
 
-
     def get_new_start_goal(self):
 
         start = np.random.choice(self.starts)
@@ -276,10 +279,12 @@ class CarlaEnv(gym.Env):
                 time.sleep(3)
 
         measurements, sensor_data = self.current_state
-        #return self._process_observation(measurements, sensor_data)
-
-        return self.render(mode='rgb_array')
-
+        
+        if self.image_obs:
+            return self.render(mode='rgb_array')
+        else:
+            return self._process_observation(measurements, sensor_data)
+        
     def step(self, a):
         control = self._map_controls(a)
         for i in range(100):
@@ -293,9 +298,11 @@ class CarlaEnv(gym.Env):
         measurements, sensor_data = self.current_state
         
         reward, is_done = self._get_reward_and_termination()
-        #obs = self._process_observation(measurements, sensor_data)
-        obs = self.render(mode='rgb_array')
-
+        if self.image_obs:
+            obs = self.render(mode='rgb_array')
+        else:
+            obs = self._process_observation(measurements, sensor_data)
+        
         return obs, reward, is_done, {}
 
 
